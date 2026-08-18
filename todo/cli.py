@@ -35,11 +35,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_add.add_argument("--due", help="截止日期，格式 YYYY-MM-DD")
     p_add.add_argument("--priority", choices=PRIORITIES, default="medium",
                        help="优先级，默认 medium")
+    p_add.add_argument("--tags", help="标签，逗号分隔，如 a,b,c")
 
     p_list = sub.add_parser("list", help="列出所有任务")
     group = p_list.add_mutually_exclusive_group()
     group.add_argument("--overdue", action="store_true", help="只看已逾期的未完成任务")
     group.add_argument("--today", action="store_true", help="只看今天到期的未完成任务")
+    group.add_argument("--tag", help="只显示含该标签的任务")
 
     p_done = sub.add_parser("done", help="标记任务完成")
     p_done.add_argument("id", help="任务 ID")
@@ -55,7 +57,11 @@ def _cmd_add(args: argparse.Namespace, storage: Storage) -> int:
         except ValueError as e:
             print(f"错误：{e}", file=sys.stderr)
             return 2
-    task = Task(title=args.title, due=due, priority=args.priority)
+    tags: list[str] = []
+    if args.tags:
+        # 逗号分隔，去掉空白并过滤空标签
+        tags = [t.strip() for t in args.tags.split(",") if t.strip()]
+    task = Task(title=args.title, due=due, priority=args.priority, tags=tags)
     storage.add(task)
     print(f"已添加 [{task.id}] {task.title}")
     return 0
@@ -69,6 +75,8 @@ def _cmd_list(args: argparse.Namespace, storage: Storage) -> int:
         tasks = [t for t in tasks if is_overdue(t, today)]
     elif args.today:
         tasks = [t for t in tasks if t.due is not None and not t.done and t.due == today]
+    elif args.tag:
+        tasks = [t for t in tasks if args.tag in t.tags]
 
     if not tasks:
         print("（没有任务）")

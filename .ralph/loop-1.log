@@ -1,0 +1,62 @@
+• Read AGENTS.md (already in context) and fix_plan.md.T1 is the first uncompleted task. Let me look at the code: models.py, storage.py, cli.py, and tests.Let me look at test_due_date.py briefly to see test style for CLI.Implement T1: priority. Changes:
+
+  1. models.py: add `priority: str = "medium"` field; serialize in to_dict; from_dict with fallback "medium" if missing/invalid.
+  2. cli.py: `add --priority high|medium|low` via argparse choices, default "medium"; list shows `[!]` prefix for high tasks.
+  3. tests: tests/test_priority.py.
+
+  Output format: line currently `f"[{mark}] {t.id}  {t.title}"`. Add `[!]` prefix — probably at start: `[!] [x] id title`? Plan says "high 任务显示 `[!]` 前缀标记". I'll prepend `[!] ` at line start. Note test_list_task_without_due_output_unchanged only covers medium default, so fine.
+
+  from_dict tolerance: priority = data.get("priority", "medium"); if not in ("high","medium","low"), fallback "medium".
+
+• 实现 T1（priority 优先级），先改模型、CLI，再加测试。• Wait — argparse with invalid choice exits with SystemExit(2), which is fine for CLI (returns non-zero via argparse error). Tests: invalid priority would raise SystemExit — acceptable.
+
+  Now write tests file tests/test_priority.py.
+
+现在添加 T1 的测试文件：.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+                                                 [100%]
+
+24 passed in 0.02s
+• All 24 tests pass. Now mark T1 as done in fix_plan.md and commit.[master ae05fe4] feat: add 支持 --priority，list 中 high 任务显示 [!] 前缀
+ 7 files changed, 100 insertions(+), 5 deletions(-)
+ create mode 100644 tests/__pycache__/test_priority.cpython-313-pytest-9.1.1.pyc
+ create mode 100644 tests/test_priority.py
+
+
+本轮完成了 T1 priority 优先级功能：
+
+  - **模型**：`Task` 新增 `priority` 字段（默认 `medium`），`from_dict` 对缺失/非法值容错为 `medium`，保证旧 JSON 向后兼容
+  - **CLI**：`add` 支持 `--priority high|medium|low`；`list` 中 high 任务行首显示 `[!]` 前缀
+  - **测试**：新增 `tests/test_priority.py` 共 7 个用例，全部通过（24 passed）
+  - 已勾选 fix_plan.md 并提交 `ae05fe4`
+
+  ```
+  RALPH_STATUS
+  TASK_COMPLETED: T1
+  TESTS_PASSING: true
+  EXIT_SIGNAL: false
+  ```
+
+To resume this session: kimi -r session_a4f97f6d-798f-48f3-a6cd-12a3f9f8dd66
