@@ -49,6 +49,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_done = sub.add_parser("done", help="标记任务完成")
     p_done.add_argument("id", help="任务 ID")
 
+    p_delete = sub.add_parser("delete", help="删除任务")
+    p_delete.add_argument("id", help="任务 ID")
+
     p_search = sub.add_parser("search", help="按标题关键词搜索任务")
     p_search.add_argument("keyword", help="搜索关键词（大小写不敏感）")
 
@@ -173,6 +176,15 @@ def _cmd_export(args: argparse.Namespace, storage: Storage) -> int:
     return 0
 
 
+def _cmd_delete(args: argparse.Namespace, storage: Storage) -> int:
+    """按 ID 删除任务；ID 不存在时报错返回 1。"""
+    if not storage.delete(args.id):
+        print(f"找不到任务 {args.id}", file=sys.stderr)
+        return 1
+    print(f"已删除 {args.id}")
+    return 0
+
+
 def next_occurrence(task: Task, today: date) -> Task:
     """按重复规则生成下一条任务。
 
@@ -214,6 +226,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_list(args, storage)
     if args.command == "done":
         return _cmd_done(args, storage)
+    if args.command == "delete":
+        return _cmd_delete(args, storage)
     if args.command == "search":
         return _cmd_search(args, storage)
     if args.command == "stats":

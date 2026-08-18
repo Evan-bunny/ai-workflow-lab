@@ -41,3 +41,12 @@ class Storage:
                 self.save(tasks)
                 return True
         return False
+
+    def delete(self, task_id: str) -> bool:
+        """按 ID 删除任务，返回是否找到并删除。"""
+        tasks = self.load()
+        remaining = [t for t in tasks if t.id != task_id]
+        if len(remaining) == len(tasks):
+            return False
+        self.save(remaining)
+        return True
