@@ -120,3 +120,26 @@ def test_done_non_repeat_spawns_nothing(patch_storage) -> None:
     tasks = Storage(path=path).load()
     assert len(tasks) == 1
     assert tasks[0].done is True
+
+
+def test_done_twice_does_not_spawn_duplicate(patch_storage) -> None:
+    """重复执行 done 不应重复生成下一条周期任务（回归测试）。"""
+    task = Task(title="每日站会", repeat="daily")
+    path = patch_storage([task])
+    assert cli.main(["done", task.id]) == 0
+    assert cli.main(["done", task.id]) == 0
+    tasks = Storage(path=path).load()
+    # 原始任务 + 仅一条自动生成的下一条
+    assert len(tasks) == 2
+    assert tasks[0].done is True
+    assert tasks[1].done is False
+
+
+def test_done_twice_on_completed_non_repeat_is_noop(patch_storage, capsys) -> None:
+    """非周期任务重复 done 只提示已是完成状态。"""
+    task = Task(title="一次性任务")
+    path = patch_storage([task])
+    assert cli.main(["done", task.id]) == 0
+    assert cli.main(["done", task.id]) == 0
+    assert "已是完成状态" in capsys.readouterr().out
+    assert len(Storage(path=path).load()) == 1

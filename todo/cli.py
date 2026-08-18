@@ -203,8 +203,14 @@ def next_occurrence(task: Task, today: date) -> Task:
 
 
 def _cmd_done(args: argparse.Namespace, storage: Storage) -> int:
-    """标记完成；若任务带重复规则，同时自动生成下一条任务。"""
+    """标记完成；若任务带重复规则，同时自动生成下一条任务。
+
+    已完成任务重复执行 done 时直接提示并跳过，避免重复任务被重复生成。
+    """
     task = next((t for t in storage.load() if t.id == args.id), None)
+    if task is not None and task.done:
+        print(f"任务 {args.id} 已是完成状态")
+        return 0
     if not storage.mark_done(args.id):
         print(f"找不到任务 {args.id}", file=sys.stderr)
         return 1
