@@ -7,7 +7,7 @@ mkdir -p .ralph
 MAX_LOOPS=${1:-8}
 for i in $(seq 1 "$MAX_LOOPS"); do
   echo "===== Loop $i / $MAX_LOOPS 开始 $(date +%H:%M:%S) ====="
-  output=$(kimi -p "$(cat PROMPT.md)" --yolo 2>&1)
+  output=$(kimi -p "$(cat PROMPT.md)" 2>&1)
   echo "$output" | tee ".ralph/loop-$i.log" | tail -5
 
   # 双重完成判定：显式信号 + 计划文件无未完成项
