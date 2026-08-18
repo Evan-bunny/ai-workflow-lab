@@ -133,4 +133,4 @@ git worktree add ../wt-recurring -b feat/recurring  # agent B：重复任务
 
 ## License
 
-[MIT](LICENSE)（版权人字段为占位符，fork 或发布前请替换为你自己的名字）
+[MIT](LICENSE)
