@@ -49,6 +49,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_search = sub.add_parser("search", help="按标题关键词搜索任务")
     p_search.add_argument("keyword", help="搜索关键词（大小写不敏感）")
 
+    sub.add_parser("stats", help="统计任务数量（总数/已完成/未完成/逾期未完成）")
+
     return parser
 
 
@@ -116,6 +118,20 @@ def _cmd_search(args: argparse.Namespace, storage: Storage) -> int:
     return 0
 
 
+def _cmd_stats(args: argparse.Namespace, storage: Storage) -> int:
+    """输出任务统计：总数、已完成、未完成、逾期未完成。"""
+    today = date.today()
+    tasks = storage.load()
+    done = sum(1 for t in tasks if t.done)
+    undone = len(tasks) - done
+    overdue = sum(1 for t in tasks if is_overdue(t, today))
+    print(f"总任务数: {len(tasks)}")
+    print(f"已完成: {done}")
+    print(f"未完成: {undone}")
+    print(f"逾期未完成: {overdue}")
+    return 0
+
+
 def _cmd_done(args: argparse.Namespace, storage: Storage) -> int:
     if storage.mark_done(args.id):
         print(f"已完成 {args.id}")
@@ -136,6 +152,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_done(args, storage)
     if args.command == "search":
         return _cmd_search(args, storage)
+    if args.command == "stats":
+        return _cmd_stats(args, storage)
     return 1  # pragma: no cover
 
 

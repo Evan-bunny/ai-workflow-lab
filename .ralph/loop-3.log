@@ -1,0 +1,88 @@
+• Read fix_plan.md first.Check storage.py briefly and an existing test file for style. Then implement T3: search subcommand. Let me look at tests/test_tags.py for style.Implement T3: `search <关键词>` subcommand, case-insensitive substring match on title, output matching tasks (reuse list formatting). Add a helper to print tasks to avoid duplication? Keep it simple: add search command that filters and reuses same line formatting. I'll refactor line formatting into a small helper `_format_task_line(task, today)`.
+
+  Edits to cli.py:
+  1. Add search subparser.
+  2. Add `_cmd_search`.
+  3. Maybe extract line formatting. Minimal change: keep list as is, and in _cmd_search use same format. To avoid duplication, extract a helper.
+
+• 现在实现 T3：新增 `todo search <关键词>` 子命令。再写测试文件：============================= test session starts ==============================
+platform darwin -- Python 3.13.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/ariasu/ai-workflow-lab/todo-cli
+configfile: pyproject.toml
+collected 40 items
+
+tests/test_basics.py .
+.
+.
+.
+                                                [ 10%]
+
+tests/test_due_date.py 
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+                                     [ 42%]
+
+tests/test_priority.py 
+.
+.
+.
+.
+.
+.
+.
+                                           [ 60%]
+
+tests/test_search.py 
+.
+.
+.
+.
+.
+.
+.
+                                             [ 77%]
+
+tests/test_tags.py 
+.
+.
+.
+.
+.
+.
+.
+.
+.
+                                             [100%]
+
+
+============================== 40 passed in 0.04s ==============================
+• All pass. Mark T3 done, commit.
+
+全部 40 个测试通过。勾选任务并提交：[master fc35ece] feat: 增加 search 子命令，支持标题关键词大小写不敏感搜索
+ 6 files changed, 139 insertions(+), 15 deletions(-)
+ create mode 100644 .ralph/loop-2.log
+ create mode 100644 tests/__pycache__/test_search.cpython-313-pytest-9.1.1.pyc
+ create mode 100644 tests/test_search.py
+• The task for this round is already done (T3 completed, committed). Just output the status block. TodoList not needed for this completed single-task round.
+
+本轮工作已完成：T3 search 搜索功能实现完毕，测试全绿（40 passed），已勾选 fix_plan.md 并提交。
+
+  ```
+  RALPH_STATUS
+  TASK_COMPLETED: T3
+  TESTS_PASSING: true
+  EXIT_SIGNAL: false
+  ```
+
+To resume this session: kimi -r session_5e48a9dd-8b0c-44d9-bf44-f5c8495805b3
