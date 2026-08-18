@@ -134,3 +134,12 @@ Thanks to all contributors!
 ## License
 
 [MIT](LICENSE)
+
+## English Summary
+
+**ai-workflow-lab** is a hands-on comparison of three AI-assisted development
+workflows — Spec Kit (spec-driven), Ralph Loop (autonomous loop), and
+multi-agent orchestration — applied to building the same small `todo` CLI.
+
+Quick start: `uv sync && uv run todo --help && uv run pytest` (66 tests).
+See the Chinese sections above for the full walkthrough of each workflow.
