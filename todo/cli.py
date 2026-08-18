@@ -7,7 +7,7 @@ import re
 import sys
 from datetime import date
 
-from .models import Task
+from .models import PRIORITIES, Task
 from .storage import Storage
 
 # 严格限定 YYYY-MM-DD，避免 fromisoformat 接受 20260820 这类紧凑格式
@@ -33,6 +33,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_add = sub.add_parser("add", help="新增任务")
     p_add.add_argument("title", help="任务标题")
     p_add.add_argument("--due", help="截止日期，格式 YYYY-MM-DD")
+    p_add.add_argument("--priority", choices=PRIORITIES, default="medium",
+                       help="优先级，默认 medium")
 
     p_list = sub.add_parser("list", help="列出所有任务")
     group = p_list.add_mutually_exclusive_group()
@@ -53,7 +55,7 @@ def _cmd_add(args: argparse.Namespace, storage: Storage) -> int:
         except ValueError as e:
             print(f"错误：{e}", file=sys.stderr)
             return 2
-    task = Task(title=args.title, due=due)
+    task = Task(title=args.title, due=due, priority=args.priority)
     storage.add(task)
     print(f"已添加 [{task.id}] {task.title}")
     return 0
@@ -74,6 +76,9 @@ def _cmd_list(args: argparse.Namespace, storage: Storage) -> int:
     for t in tasks:
         mark = "x" if t.done else " "
         line = f"[{mark}] {t.id}  {t.title}"
+        # 高优先级任务加 [!] 前缀标记
+        if t.priority == "high":
+            line = "[!] " + line
         if t.due is not None:
             line += f"  (截止: {t.due.isoformat()})"
             if is_overdue(t, today):
