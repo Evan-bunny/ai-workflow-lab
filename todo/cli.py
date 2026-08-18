@@ -46,6 +46,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_done = sub.add_parser("done", help="标记任务完成")
     p_done.add_argument("id", help="任务 ID")
 
+    p_search = sub.add_parser("search", help="按标题关键词搜索任务")
+    p_search.add_argument("keyword", help="搜索关键词（大小写不敏感）")
+
     return parser
 
 
@@ -67,6 +70,29 @@ def _cmd_add(args: argparse.Namespace, storage: Storage) -> int:
     return 0
 
 
+def _format_task_line(task: Task, today: date) -> str:
+    """生成单行任务展示文本，list 和 search 共用。"""
+    mark = "x" if task.done else " "
+    line = f"[{mark}] {task.id}  {task.title}"
+    # 高优先级任务加 [!] 前缀标记
+    if task.priority == "high":
+        line = "[!] " + line
+    if task.due is not None:
+        line += f"  (截止: {task.due.isoformat()})"
+        if is_overdue(task, today):
+            line += " !逾期"
+    return line
+
+
+def _print_tasks(tasks: list[Task], today: date) -> None:
+    """统一输出任务列表，空列表打印占位提示。"""
+    if not tasks:
+        print("（没有任务）")
+        return
+    for t in tasks:
+        print(_format_task_line(t, today))
+
+
 def _cmd_list(args: argparse.Namespace, storage: Storage) -> int:
     today = date.today()
     tasks = storage.load()
@@ -78,20 +104,15 @@ def _cmd_list(args: argparse.Namespace, storage: Storage) -> int:
     elif args.tag:
         tasks = [t for t in tasks if args.tag in t.tags]
 
-    if not tasks:
-        print("（没有任务）")
-        return 0
-    for t in tasks:
-        mark = "x" if t.done else " "
-        line = f"[{mark}] {t.id}  {t.title}"
-        # 高优先级任务加 [!] 前缀标记
-        if t.priority == "high":
-            line = "[!] " + line
-        if t.due is not None:
-            line += f"  (截止: {t.due.isoformat()})"
-            if is_overdue(t, today):
-                line += " !逾期"
-        print(line)
+    _print_tasks(tasks, today)
+    return 0
+
+
+def _cmd_search(args: argparse.Namespace, storage: Storage) -> int:
+    """标题大小写不敏感的子串匹配。"""
+    keyword = args.keyword.lower()
+    tasks = [t for t in storage.load() if keyword in t.title.lower()]
+    _print_tasks(tasks, date.today())
     return 0
 
 
@@ -113,6 +134,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_list(args, storage)
     if args.command == "done":
         return _cmd_done(args, storage)
+    if args.command == "search":
+        return _cmd_search(args, storage)
     return 1  # pragma: no cover
 
 

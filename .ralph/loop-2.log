@@ -1,0 +1,17 @@
+• Read fix_plan.md and AGENTS.md (AGENTS.md already in context). Read fix_plan.md.Look at test_priority.py for test style.Implement T2: tags. Add `tags: list[str]` field to Task, `--tags a,b,c` to add, `list --tag <name>` filter. Update models to_dict/from_dict with backward compat, cli parser, and tests.
+
+• 本轮做 T2（tags 标签功能）。先修改模型和 CLI。写测试文件：.................................                                        [100%]
+33 passed in 0.03s
+• Tests pass. Mark T2 done, commit, output status.7fb2c92 feat: 增加 tags 标签功能（--tags 与 list --tag 过滤）
+
+
+T2 完成：`Task` 模型新增 `tags` 字段（旧 JSON 兼容，缺字段/非法值容错为空列表），`add --tags a,b,c` 支持逗号分隔（自动去空白、过滤空标签），`list --tag <名>` 过滤含该标签的任务（与 `--overdue`/`--today` 互斥）。新增 9 个测试，`uv run pytest` 33 个测试全部通过，已提交。
+
+  ```
+  RALPH_STATUS
+  TASK_COMPLETED: T2
+  TESTS_PASSING: true
+  EXIT_SIGNAL: false
+  ```
+
+To resume this session: kimi -r session_cd5cca64-e9b7-44a2-8c91-38f589e09e45
