@@ -130,7 +130,7 @@ git worktree add ../wt-recurring -b feat/recurring  # agent B：重复任务
 ├── AGENTS.md              # 【上下文工程】项目约定（所有 workflow 的地基）
 └── pyproject.toml         # uv 管理的 Python 包（含 todo 命令入口）
 ```
-
+Thanks to all contributors! 
 ## License
 
 [MIT](LICENSE)
