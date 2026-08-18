@@ -5,10 +5,10 @@ from __future__ import annotations
 import argparse
 import re
 import sys
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
-from .models import PRIORITIES, Task
+from .models import PRIORITIES, REPEATS, Task
 from .storage import Storage
 
 # 严格限定 YYYY-MM-DD，避免 fromisoformat 接受 20260820 这类紧凑格式
@@ -37,6 +37,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_add.add_argument("--priority", choices=PRIORITIES, default="medium",
                        help="优先级，默认 medium")
     p_add.add_argument("--tags", help="标签，逗号分隔，如 a,b,c")
+    p_add.add_argument("--repeat", choices=REPEATS,
+                       help="重复规则：daily 每天 / weekly 每周")
 
     p_list = sub.add_parser("list", help="列出所有任务")
     group = p_list.add_mutually_exclusive_group()
@@ -70,7 +72,8 @@ def _cmd_add(args: argparse.Namespace, storage: Storage) -> int:
     if args.tags:
         # 逗号分隔，去掉空白并过滤空标签
         tags = [t.strip() for t in args.tags.split(",") if t.strip()]
-    task = Task(title=args.title, due=due, priority=args.priority, tags=tags)
+    task = Task(title=args.title, due=due, priority=args.priority, tags=tags,
+                repeat=args.repeat)
     storage.add(task)
     print(f"已添加 [{task.id}] {task.title}")
     return 0
@@ -170,12 +173,35 @@ def _cmd_export(args: argparse.Namespace, storage: Storage) -> int:
     return 0
 
 
+def next_occurrence(task: Task, today: date) -> Task:
+    """按重复规则生成下一条任务。
+
+    daily 在基准日期上加 1 天，weekly 加 7 天；基准为原任务的截止日期，
+    无截止日期则以 today 为基准。标题、优先级、标签和重复规则原样继承。
+    """
+    delta = timedelta(days=1 if task.repeat == "daily" else 7)
+    base = task.due if task.due is not None else today
+    return Task(
+        title=task.title,
+        due=base + delta,
+        priority=task.priority,
+        tags=list(task.tags),
+        repeat=task.repeat,
+    )
+
+
 def _cmd_done(args: argparse.Namespace, storage: Storage) -> int:
-    if storage.mark_done(args.id):
-        print(f"已完成 {args.id}")
-        return 0
-    print(f"找不到任务 {args.id}", file=sys.stderr)
-    return 1
+    """标记完成；若任务带重复规则，同时自动生成下一条任务。"""
+    task = next((t for t in storage.load() if t.id == args.id), None)
+    if not storage.mark_done(args.id):
+        print(f"找不到任务 {args.id}", file=sys.stderr)
+        return 1
+    print(f"已完成 {args.id}")
+    if task is not None and task.repeat is not None:
+        nxt = next_occurrence(task, date.today())
+        storage.add(nxt)
+        print(f"已生成下一条 [{nxt.id}] {nxt.title}（截止: {nxt.due.isoformat()}）")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:

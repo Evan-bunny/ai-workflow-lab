@@ -8,6 +8,7 @@ from datetime import date
 
 
 PRIORITIES = ("high", "medium", "low")
+REPEATS = ("daily", "weekly")
 
 
 @dataclass
@@ -15,7 +16,8 @@ class Task:
     """一条待办任务。
 
     due 为可选截止日期，为 None 表示无日期；priority 为优先级，
-    默认 medium；tags 为标签列表。三者都需兼容缺失字段的旧版数据。
+    默认 medium；tags 为标签列表；repeat 为重复规则（daily/weekly），
+    为 None 表示不重复。四者都需兼容缺失字段的旧版数据。
     """
 
     title: str
@@ -23,6 +25,7 @@ class Task:
     due: date | None = None
     priority: str = "medium"
     tags: list[str] = field(default_factory=list)
+    repeat: str | None = None
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
 
     def to_dict(self) -> dict:
@@ -33,6 +36,7 @@ class Task:
             "due": self.due.isoformat() if self.due else None,
             "priority": self.priority,
             "tags": list(self.tags),
+            "repeat": self.repeat,
         }
 
     @classmethod
@@ -50,6 +54,9 @@ class Task:
         # 旧版数据没有 tags 字段；非列表或含非字符串元素一律容错为空列表
         raw_tags = data.get("tags")
         tags = [t for t in raw_tags if isinstance(t, str)] if isinstance(raw_tags, list) else []
+        # 旧版数据没有 repeat 字段；非法值一律容错为 None
+        raw_repeat = data.get("repeat")
+        repeat = raw_repeat if raw_repeat in REPEATS else None
         return cls(
             id=data["id"],
             title=data["title"],
@@ -57,4 +64,5 @@ class Task:
             due=due,
             priority=priority,
             tags=tags,
+            repeat=repeat,
         )
