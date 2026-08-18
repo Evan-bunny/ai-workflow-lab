@@ -1,4 +1,4 @@
-"""命令行入口：add / list / done。"""
+"""命令行入口：add / list / done / search / stats / export。"""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import argparse
 import re
 import sys
 from datetime import date
+from pathlib import Path
 
 from .models import PRIORITIES, Task
 from .storage import Storage
@@ -50,6 +51,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_search.add_argument("keyword", help="搜索关键词（大小写不敏感）")
 
     sub.add_parser("stats", help="统计任务数量（总数/已完成/未完成/逾期未完成）")
+
+    p_export = sub.add_parser("export", help="导出所有任务为 Markdown 文件")
+    p_export.add_argument("path", help="导出文件路径（已存在时拒绝覆盖）")
 
     return parser
 
@@ -132,6 +136,40 @@ def _cmd_stats(args: argparse.Namespace, storage: Storage) -> int:
     return 0
 
 
+def _format_export_line(task: Task) -> str:
+    """生成单条任务的 Markdown 列表行，附带截止日期和标签信息。"""
+    mark = "x" if task.done else " "
+    line = f"- [{mark}] {task.title}"
+    if task.due is not None:
+        line += f"（截止: {task.due.isoformat()}）"
+    if task.tags:
+        line += f"（标签: {', '.join(task.tags)}）"
+    return line
+
+
+def _render_export_markdown(tasks: list[Task]) -> str:
+    """把任务列表渲染为按未完成/已完成分组的 Markdown 文本。"""
+    undone = [t for t in tasks if not t.done]
+    done = [t for t in tasks if t.done]
+    lines = ["# 任务导出", "", "## 未完成", ""]
+    lines += [_format_export_line(t) for t in undone]
+    lines += ["", "## 已完成", ""]
+    lines += [_format_export_line(t) for t in done]
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _cmd_export(args: argparse.Namespace, storage: Storage) -> int:
+    """导出所有任务为 Markdown 文件；目标已存在时报错并拒绝覆盖。"""
+    out_path = Path(args.path)
+    if out_path.exists():
+        print(f"错误：文件已存在，拒绝覆盖：{out_path}", file=sys.stderr)
+        return 1
+    out_path.write_text(_render_export_markdown(storage.load()), encoding="utf-8")
+    print(f"已导出到 {out_path}")
+    return 0
+
+
 def _cmd_done(args: argparse.Namespace, storage: Storage) -> int:
     if storage.mark_done(args.id):
         print(f"已完成 {args.id}")
@@ -154,6 +192,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_search(args, storage)
     if args.command == "stats":
         return _cmd_stats(args, storage)
+    if args.command == "export":
+        return _cmd_export(args, storage)
     return 1  # pragma: no cover
 
 
